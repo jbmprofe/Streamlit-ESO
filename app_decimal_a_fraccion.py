@@ -1,6 +1,8 @@
 import streamlit as st
 from fractions import Fraction
 
+
+st.markdown("![Visitas](https://visitor-badge.laobi.icu/badge?page_id=tu_usuario.nombre_de_tu_app)")
 # Muestra el logo centrado o con un ancho personalizado
 st.image("logo_newton-salas.jpg", width=180)
 
