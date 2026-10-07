@@ -4,7 +4,7 @@ from fractions import Fraction
 # Muestra el logo centrado o con un ancho personalizado
 st.image("logo_newton-salas.jpg", width=180)
 
-st.title("Aplicación de Matemáticas para ESO")
+st.title("Matemáticas para ESO")
 
 # Configuración de página
 st.set_page_config(
@@ -13,8 +13,11 @@ st.set_page_config(
     layout="centered"
 )
 
-st.title("🔢 Generador de Fracción Generatriz")
-st.write("Convierte cualquier número decimal a su fracción generatriz paso a paso.")
+st.title(":blue[Generador de Fracción Generatriz]")
+st.markdown("### Convierte cualquier número decimal a su fracción generatriz paso a paso.")
+st.markdown("#### :blue[Usa esta web para generar tus ejercicios:]")
+st.markdown("#### resuélvelos primero a mano en tu cuaderno y comprueba aquí la solución al terminar.")
+st.markdown("##### :red[Copia en tu cuaderno ➔ Resuelve a mano ➔ Comprueba el resultado aquí]")
 
 # Listas auxiliares para el cálculo de denominadores
 nueves_str = [str(9 * (10**i)) for i in range(9)]  # "9", "99", "999", ...
@@ -27,7 +30,7 @@ tipo_decimal = st.radio(
         "Decimal Exacto (E)",
         "Periódico Puro (P)",
         "Periódico Mixto (M)",
-        "No Periódico / Irracional (N)"
+        "No periódico / irracional (N)"
     ],
     index=0
 )
@@ -36,7 +39,7 @@ st.divider()
 
 # --- CASO 1: DECIMAL EXACTO ---
 if "Exacto" in tipo_decimal:
-    st.subheader("Paso a fracción de un Decimal Exacto")
+    st.subheader("Paso a fracción de un número decimal exacto")
     
     col1, col2 = st.columns(2)
     with col1:
@@ -44,7 +47,7 @@ if "Exacto" in tipo_decimal:
     with col2:
         dec_exactos = st.text_input("Parte decimal:", value="75")
 
-    if st.button("Calcular Fracción", type="primary"):
+    if st.button("Calcular fracción", type="primary"):
         if dec_exactos.isdigit() and (entera.isdigit() or (entera.startswith('-') and entera[1:].isdigit())):
             exacto_str = f"{entera}.{dec_exactos}"
             num_decimales = len(dec_exactos)
@@ -67,7 +70,7 @@ if "Exacto" in tipo_decimal:
 
 # --- CASO 2: PERIÓDICO PURO ---
 elif "Puro" in tipo_decimal:
-    st.subheader("Paso a fracción de un Periódico Puro")
+    st.subheader("Paso a fracción de un número decimal periódico puro")
     
     col1, col2 = st.columns(2)
     with col1:
@@ -75,7 +78,7 @@ elif "Puro" in tipo_decimal:
     with col2:
         decimales = st.text_input("Periodo (decimales que se repiten):", value="36")
 
-    if st.button("Calcular Fracción", type="primary"):
+    if st.button("Calcular fracción", type="primary"):
         if decimales.isdigit() and (entera.isdigit() or (entera.startswith('-') and entera[1:].isdigit())):
             num_decimales = len(decimales)
             periodico_str = f"{entera}.{decimales}{decimales}..."
@@ -101,7 +104,7 @@ elif "Puro" in tipo_decimal:
 
 # --- CASO 3: PERIÓDICO MIXTO ---
 elif "Mixto" in tipo_decimal:
-    st.subheader("Paso a fracción de un Periódico Mixto")
+    st.subheader("Paso a fracción de un número decimal periódico mixto")
     
     entera = st.text_input("Parte entera:", value="1")
     col1, col2 = st.columns(2)
@@ -140,6 +143,6 @@ elif "Mixto" in tipo_decimal:
 
 # --- CASO 4: NO PERIÓDICO ---
 elif "No Periódico" in tipo_decimal:
-    st.subheader("Número Decimal No Periódico (Irracional)")
+    st.subheader("Es un número decimal IRRACIONAL")
     st.warning("⚠️ Este tipo de números (como $\pi$, $\sqrt{2}$ o $e$) tienen infinitas cifras decimales no periódicas.")
-    st.info("**Conclusión:** No se pueden expresar en forma de fracción. Son **números irracionales** ($\mathbb{I}$).")
+    st.info("**Conclusión:** no se pueden expresar en forma de fracción. No son **números racionales**.")
