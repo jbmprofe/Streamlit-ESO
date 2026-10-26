@@ -1,5 +1,8 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from fractions import Fraction
 
 st.markdown("![Visitas](https://visitor-badge.laobi.icu/badge?page_id=jbmprofe.app_millas_km)")
 # Muestra el logo centrado o con un ancho personalizado
@@ -21,178 +24,162 @@ st.markdown(
 )
 
 # --- 1. Generar la serie de Fibonacci ---
-
-
 def fibonacci(n):
-  secuencia = [0, 1]
-  while len(secuencia) < n:
-    secuencia.append(secuencia[-1] + secuencia[-2])
-  return secuencia[:n]
+    secuencia = [0, 1]
+    while len(secuencia) < n:
+        secuencia.append(secuencia[-1] + secuencia[-2])
+    return secuencia[:n]
 
+serie_fib = fibonacci(14)
+millas = serie_fib[2:]  # Comenzamos desde el 1 para las millas
 
-serie_fibonacci = fibonacci(20)
+# Sidebar - Teoría rápida
+st.sidebar.header("📚 Recordatorio Teórico")
+st.sidebar.markdown(r"**Error Absoluto ($E_a$)** = $|V_{\text{aproximado}} - V_{\text{real}}|$")
+st.sidebar.markdown(r"**Error Relativo ($E_r$)** = $\frac{E_a}{V_{\text{real}}} \cdot 100\%$")
+st.sidebar.markdown("""
+* **Error Absoluto:** Nos indica la diferencia física real (en la misma unidad, en este caso km).
+* **Error Relativo:** Nos da una idea porcentual de la importancia de ese error. ¡Un error de 1 km no es lo mismo si medimos 2 km que si medimos 1000 km!
+""")
 
-st.subheader("1. La sucesión de Fibonacci")
-st.write("Los primeros términos de la sucesión de Fibonacci son 0, 1:")
-st.write("Los siguientes términos de la sucesión se obtienen sumando los dos términos anteriores:")
-st.code(str(serie_fibonacci))
+# Crear pestañas para organizar la actividad
+tab1, tab2, tab3 = st.tabs(["📈 Gráfica Interactiva", "🧮 Calculadora de Errores e Interpolación", "📊 Tabla General de Errores"])
 
-st.write("La sucesión de Fibonacci aparece en múltiples fenómenos naturales, y también nos sirve")
-st.write("para hacer un cambio de unidades rápido de millas a km (o de mph a km/h)")
+with tab1:
+    st.header("Visualización del Modelo")
+    st.write("Observa cómo los puntos de la aproximación de Fibonacci (Millas, Km aproximados) se sitúan casi perfectamente sobre la recta de conversión exacta (1 milla = 1.609 km).")
 
-millas = serie_fibonacci[2:]
-st.write("Si tomamos los términos de la sucesión de Fibonacci como distancias (o velocidades) en millas:")
-st.code(str(millas))
+    # Gráfico
+    m_km = 1.609
+    x_fib = serie_fib[2:-1]
+    y_fib = serie_fib[3:]
 
-st.write(
-    "**Aproximación:** Cada número de la sucesión en millas se aproxima al"
-    " siguiente término en kilómetros:"
-)
+    x_recta = np.linspace(0, max(x_fib) + 10, 500)
+    y_recta_exacta = x_recta * m_km
 
-# Mostrar equivalencias en columnas o texto destacado
-equivalencias_texto = []
-for i in range(0, len(millas) - 1):
-  equivalencias_texto.append(f"**{millas[i]} millas** => {millas[i+1]} km")
-st.markdown(" | ".join(equivalencias_texto[:5]))
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(x_recta, y_recta_exacta, label='Conversión Real Exacta (y = x * 1.609)', color='#2ca02c', linestyle='--')
+    ax.scatter(x_fib, y_fib, color='#1f77b4', s=80, zorder=5, label='Aproximación Fibonacci (Millas, Km)')
 
-# --- 2. Tabla de Errores ---
-st.subheader("2. Cálculo de los errores absoluto y relativo")
-m_km = 1.609
+    # Anotaciones didácticas
+    for i, m_val in enumerate(x_fib[:7]): # Anotar los primeros puntos para que se entienda mejor
+        ax.annotate(f"({m_val}, {y_fib[i]})", (m_val, y_fib[i]), textcoords="offset points", xytext=(10,-5), ha='left', fontsize=9)
 
-st.write("Calculamos para cada distancia el valor del error absoluto y del error")
-st.markdown(f"relativo tomando la equivalencia: 1 milla = {m_km} km.")
+    ax.set_xlabel('Distancia en Millas (x)')
+    ax.set_ylabel('Distancia en Kilómetros (y)')
+    ax.set_title('Millas vs Kilómetros: Real vs Fibonacci')
+    ax.legend()
+    ax.grid(True, linestyle=':', alpha=0.6)
 
-resultados = []
-for i in range(len(millas) - 1):
-  m = millas[i]
-  aprox_km = millas[i + 1]
-  real_km = m * m_km
-  err_abs = abs(aprox_km - real_km)
-  err_rel = err_abs / real_km
-  err_rel_pct = err_rel * 100
-  operacion_err_abs = f"|{aprox_km} - {round(real_km, 3)}| = {round(err_abs, 3)}"
-  resultados.append({
-      "Millas": m,
-      "Aproximación (km)": aprox_km,
-      "Valor Real (km)": round(real_km, 3),
-      "Error Absoluto (km)": operacion_err_abs,
-      "Error Relativo (%)": f"{round(err_rel_pct, 1)}%",
-  })
+    st.pyplot(fig)
 
-df_errores = pd.DataFrame(resultados)
-# En Streamlit se usa st.dataframe en lugar de display() o print()
-# st.dataframe(df_errores, use_container_width=True)
-# st.write(df_errores)
-# Convertir el DataFrame a HTML plano para evitar que Streamlit/Pandas carguen pyarrow
-st.markdown(df_errores.to_html(index=False, escape=False), unsafe_allow_html=True)
+with tab2:
+    st.header("🔍 Interpolación y Cálculo de Errores a la Carta")
+    st.write("¿Qué pasa si queremos convertir un valor que no es exactamente un término de Fibonacci? Usamos **interpolación proporcional**. Introduce cualquier velocidad o distancia en millas:")
 
-# --- 3. Sección Interactiva: Método de Interpolación para Alumnos ---
-st.divider()
-st.subheader("3. 🧮 Herramienta Interactiva de Interpolación")
-st.markdown(
-    "Introduce un valor de millas para ver cómo se calcula la aproximación por"
-    " interpolación lineal usando Fibonacci:"
-)
+    # Input del alumno
+    val_usuario = st.number_input("Introduce el valor en millas (mph o millas):", min_value=1.0, max_value=200.0, value=65.0, step=0.5)
 
-# Selector interactivo en Streamlit en lugar de input()
-millas_usuario = st.number_input(
-    "Introduce el valor de millas (mph):", min_value=1.0, value=10.0, step=1.0
-)
+    # Filtrar duplicados para la interpolación limpia
+    serie_filtrada = []
+    for x in serie_fib:
+        if x not in serie_filtrada or x >= 1:
+            if x == 1 and 1 in serie_filtrada: continue
+            serie_filtrada.append(x)
 
-# Serie de Fibonacci de referencia
-serie_fib = [
-    0,
-    1,
-    1,
-    2,
-    3,
-    5,
-    8,
-    13,
-    21,
-    34,
-    55,
-    89,
-    144,
-    233,
-    377,
-    610,
-    987,
-    1597,
-    2584,
-    4181,
-]
+    # Buscar intervalo
+    f_menor, f_mayor, km_menor, km_mayor = 1, 2, 2, 3
+    for i in range(len(serie_filtrada) - 1):
+        if serie_filtrada[i] <= val_usuario <= serie_filtrada[i+1]:
+            f_menor = serie_filtrada[i]
+            f_mayor = serie_filtrada[i+1]
+            km_menor = serie_filtrada[i+1]
+            km_mayor = serie_filtrada[i+2]
+            break
 
-serie_filtrada = []
-for x in serie_fib:
-  if x not in serie_filtrada or x >= 1:
-    if x == 1 and 1 in serie_filtrada:
-      continue
-    serie_filtrada.append(x)
+    # Cálculos
+    fraccion = (val_usuario - f_menor) / (f_mayor - f_menor)
+    km_estimados = km_menor + fraccion * (km_mayor - km_menor)
+    real_km = val_usuario * 1.609
 
-# Identificar límites
-if millas_usuario <= 1:
-  f_menor = 1
-  f_mayor = 2
-  km_menor = 2
-  km_mayor = 3
-else:
-  f_menor = 1
-  f_mayor = 2
-  encontrado = False
-  for i in range(len(serie_filtrada) - 1):
-    if serie_filtrada[i] <= millas_usuario <= serie_filtrada[i + 1]:
-      f_menor = serie_filtrada[i]
-      f_mayor = serie_filtrada[i + 1]
-      km_menor = serie_filtrada[i + 1]
-      km_mayor = serie_filtrada[i + 2]
-      encontrado = True
-      break
-  if not encontrado:
-    f_menor = serie_filtrada[-2]
-    f_mayor = serie_filtrada[-1]
-    km_menor = serie_filtrada[-1]
-    km_mayor = serie_filtrada[-1] + f_menor
+    err_abs_interp = abs(km_estimados - real_km)
+    err_rel_interp_pct = (err_abs_interp / real_km) * 100
 
-# Cálculos de interpolación
-fraccion = (millas_usuario - f_menor) / (f_mayor - f_menor)
-km_estimados = km_menor + fraccion * (km_mayor - km_menor)
-real_km_h = millas_usuario * 1.609
-err_abs_interp = abs(km_estimados - real_km_h)
-err_rel_interp_pct = (
-    (err_abs_interp / real_km_h) * 100 if real_km_h != 0 else 0
-)
+    col1, col2 = st.columns(2)
 
-# Mostrar resultados paso a paso de forma visual
-col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("🧠 Paso 1: Localizar los intervalos")
+        st.info(f"**{val_usuario} millas** se encuentra entre los números de Fibonacci:\n\n" 
+                f"👉 **{f_menor}** (equivale a {km_menor} km)\n\n" 
+                f"👉 **{f_mayor}** (equivale a {km_mayor} km)")
 
-with col1:
-  st.markdown("### Pasos de la Interpolación")
-  st.markdown(f"**1. Intervalo identificado:**")
-  st.markdown(
-      f"- Límite inferior: **{f_menor} mph** (aprox. **{km_menor} km/h**)"
-  )
-  st.markdown(
-      f"- Límite superior: **{f_mayor} mph** (aprox. **{km_mayor} km/h**)"
-  )
+        st.subheader("⚖️ Paso 2: Proporción del intervalo")
+        st.write(f"El valor está a una distancia proporcional de:")
+        numerador = int(val_usuario - f_menor)
+        denominador = int(f_mayor - f_menor)
+        # Creas la fracción y Python la simplifica automáticamente
+        fraccion_simplificada = Fraction(numerador, denominador)
+        # Obtienes el nuevo numerador y denominador simplificados
+        nuevo_numerador = fraccion_simplificada.numerator
+        nuevo_denominador = fraccion_simplificada.denominator
+        if nuevo_numerador != numerador:
+            st.markdown(f"$$\\frac{{{val_usuario} - {f_menor}}}{{{f_mayor} - {f_menor}}} = \\frac{{{numerador}}}{{{denominador}}} = \\frac{{{nuevo_numerador}}}{{{nuevo_denominador}}}= {round(fraccion, 3)}$$")
+        else:
+            st.markdown(f"$$\\frac{{{val_usuario} - {f_menor}}}{{{f_mayor} - {f_menor}}} = \\frac{{{numerador}}}{{{denominador}}} = {round(fraccion, 3)}$$")
+        st.write(f"Es decir, cubrimos el **{round(fraccion*100, 1)}%** del camino.")
 
-  st.markdown(f"**2. Cálculo de la proporción:**")
-  st.latex(
-    f"\\frac{{{millas_usuario} - {f_menor}}}{{{f_mayor} - {f_menor}}} ="
-    f" {round(fraccion, 4)} \\text{{ ({round(fraccion * 100, 1)}\\% del"
-    " intervalo)}")
+    with col2:
+        st.subheader("🚗 Paso 3: Estimar el resultado en km")
+        st.markdown(f"${km_menor} + {round(fraccion, 3)} \\cdot ({km_mayor} - {km_menor}) = {round(km_estimados, 1)}$ km")
+        st.subheader("🎯 Comparación Real")
+        st.success(f"Valor exacto por fórmula (Millas × 1.609):")
+        st.success(f"**{round(real_km, 2)} km**")
 
-with col2:
-  st.markdown("### Resultados y Errores")
-  st.metric(
-      label="Kilómetros Estimados (Aproximación)",
-      value=f"{round(km_estimados, 2)} km/h",
-  )
-  st.metric(
-      label="Valor Real Exacto",
-      value=f"{round(real_km_h, 3)} km/h",
-      delta=f"{round(km_estimados - real_km_h, 2)} km/h",
-  )
+    # Sección de evaluación de errores bien destacada
+    st.markdown("--- ")
+    st.subheader("🔥 Cálculo de los Errores cometidos")
+
+    col_err1, col_err2 = st.columns(2)
+    with col_err1:
+        st.metric(label="Error Absoluto", value=f"{round(err_abs_interp, 2)} km", delta=None)
+        st.write("**Desglose de la operación:**")
+        st.markdown(f"$E_a = |{round(km_estimados, 2)} - {round(real_km, 2)}| \\simeq {round(err_abs_interp, 1)}$ km")
+    with col_err2:
+        st.metric(label="Error Relativo (%)", value=f"{round(err_rel_interp_pct, 1)}%", delta=None)
+        st.write("**Desglose de la operación:**")
+        Erelativo_real = 100 * round(err_abs_interp, 1) / round(real_km, 1)
+        Ereativo_aprox = 100 * round(err_abs_interp, 1) / round(km_estimados, 1)
+        # st.markdown(f"$E_r = \\frac{{{round(err_abs_interp, 1)}}}{{{round(real_km, 1)}}} \\cdot 100 \\simeq {round(err_rel_interp_pct, 1)}\\%$")
+        st.markdown(f"$E_r = \\frac{{{round(err_abs_interp, 1)}}}{{{round(real_km, 1)}}} \\cdot 100 \\simeq {round(Erelativo_real, 1)}\\%$")
+        st.write("En general, desconocemos el valor real, y se suele tomar el valor estimado para calcular el error relativo ")
+        st.write("Puesto que el error absoluto se puede considerar mucho menor que el valor real y que el valor estimado,")
+        st.write("el error relativo toma prácticamente el mismo valor en ambos casos:")
+        st.markdown(f"$E_r = \\frac{{{round(err_abs_interp, 1)}}}{{{round(km_estimados, 1)}}} \\cdot 100 \\simeq {round(Ereativo_aprox, 1)}\\%$")
+
+with tab3:
+    st.header("📊 Tabla de Errores para Distancias Exactas de Fibonacci")
+    st.write("Esta tabla muestra el error exacto cometido al usar un término puro de la sucesión de Fibonacci para estimar el kilómetro correspondiente.")
+
+    resultados = []
+    for i in range(len(millas) - 1):
+        m = millas[i]
+        aprox_km = millas[i+1]
+        real_km = m * 1.609
+        err_abs = abs(aprox_km - real_km)
+        err_rel_pct = (err_abs / real_km) * 100
+
+        resultados.append({
+            "Millas (F_n)": m,
+            "Aprox. Km (F_n+1)": aprox_km,
+            "Valor real exacto (km)": round(real_km, 3),
+            "Error absoluto (km)": round(err_abs, 3),
+            "Error relativo (%)": f"{round(err_rel_pct, 2)}%"
+        })
+
+    df_errores_st = pd.DataFrame(resultados)
+    st.dataframe(df_errores_st, use_container_width=True)
+    st.caption("💡 ¡Nota cómo a medida que los números de la sucesión de Fibonacci se hacen más grandes, el error relativo se reduce drásticamente por debajo del 1%!")
+
 
 st.info(
     f"🔍 **Análisis de Error de la Interpolación:**\n"
