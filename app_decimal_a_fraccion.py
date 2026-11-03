@@ -146,5 +146,5 @@ elif "Mixto" in tipo_decimal:
 # --- CASO 4: NO PERIÓDICO ---
 elif "No Periódico" in tipo_decimal:
     st.subheader("Es un número decimal IRRACIONAL")
-    st.warning("⚠️ Este tipo de números (como $\pi$, $\sqrt{2}$ o $e$) tienen infinitas cifras decimales no periódicas.")
+    st.warning("⚠️ Este tipo de números (como $\\pi$, $\\sqrt{2}$ o $e$) tienen infinitas cifras decimales no periódicas.")
     st.info("**Conclusión:** no se pueden expresar en forma de fracción. No son **números racionales**.")
