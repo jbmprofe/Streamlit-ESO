@@ -7,23 +7,22 @@ st.markdown("![Visitas](https://visitor-badge.laobi.icu/badge?page_id=app_espira
 st.image("logo_newton-salas.jpg", width=180)
 
 st.title("📐 Espiral de Teodoro")
-st.write("Triángulos rectángulos cuyas hipotenusas son raíces cuadradas de números naturales)")
+st.write("Triángulos rectángulos cuyas hipotenusas son raíces cuadradas de números naturales")
 st.write("La espiral de Teodoro (también llamada espiral de las raíces cuadradas o de Teodoro de Cirene) es una construcción geométrica que permite dibujar de forma muy intuitiva las raíces cuadradas de los números enteros ($\sqrt{2}$, $\sqrt{3}$, $\sqrt{4}$, $\sqrt{5}$...) usando solo el teorema de Pitágoras.")
-# st.write("Esta aplicación genera la espiral de raíces cuadradas en Streamlit.")
 
 # Sección teórica explicativa para los alumnos (4º de ESO)
 with st.expander("📖 Explicación teórica: ¿Qué es la Espiral de Teodoro?"):
     st.subheader("1. ¿Cómo se construye?")
     st.markdown("""
     La espiral se forma dibujando triángulos rectángulos encadenados paso a paso mediante el **teorema de Pitágoras**:
-    * **Primer triángulo ($\\sqrt{2}$):** Se parte de dos catetos que miden exactamente **1 unidad**. Su hipotenusa mide $\\sqrt{1^2 + 1^2} = \\mathbf{\\sqrt{2}}$. Selecciona "2" con el cursor para trazar un segmento de longitud $\\sqrt{2}$.
+    * **Primer triángulo ($\\sqrt{2}$):** Se parte de dos catetos que miden exactamente **1 unidad**. Su hipotenusa mide $\\sqrt{1^2 + 1^2} = \\mathbf{\\sqrt{2}}$. 
     * **Segundo triángulo ($\\sqrt{3}$):** Se toma la hipotenusa anterior ($\\sqrt{2}$) como base y se le añade un nuevo cateto perpendicular de **1 unidad**. La nueva hipotenusa mide $\\sqrt{(\\sqrt{2})^2 + 1^2} = \\mathbf{\\sqrt{3}}$.
     * **Siguientes triángulos:** El proceso se repite indefinidamente, añadiendo siempre un cateto exterior de longitud **1** para obtener $\\sqrt{4}$ (que es 2), $\\sqrt{5}$, $\\sqrt{6}$, etc.
     """)
     
     st.subheader("2. ¿Cómo nos ayuda a ver los números irracionales?")
     st.markdown("""
-    Los números irracionales como $\\sqrt{2}$ o $\\sqrt{5}$ tienen infinitos decimales no periódicos, lo que dificulta imaginarlos, y tampoco se pueden representar, por ejemplo, dividiendo un segmento en 3 partes, como correspondería al número periódico $0,\\overline{3}$. La espiral resuelve este problema porque:
+    Los números irracionales como $\\sqrt{2}$ o $\\sqrt{5}$ tienen infinitos decimales no periódicos, lo que dificulta imaginarlos. La espiral resuelve este problema porque:
     * **Mide con precisión exacta:** Aunque no podamos escribir todos sus decimales, la longitud física de cada hipotenusa en el dibujo representa el valor real y exacto del número.
     * **Visualiza el crecimiento:** Permite ver cómo aumentan las magnitudes de manera geométrica y cómo el ritmo de crecimiento de las raíces se va suavizando poco a poco.
     """)
@@ -38,8 +37,15 @@ with st.container(border=True):
     Puedes ver una muestra de la actividad en Geogebra en [este enlace web](https://www.geogebra.org/classic/gnemfhmy).
     """)
 
-# Control interactivo para elegir cuántas raíces mostrar
-n_max = st.slider("Selecciona las raíces a calcular:", min_value=2, max_value=15, value=7) - 1
+# Control interactivo mediante menú desplegable (reemplaza al slider para evitar errores de carga)
+raiz_elegida = st.selectbox(
+    "Selecciona la raíz hasta la que deseas calcular:",
+    options=[f"√{i}" for i in range(2, 16)],
+    index=5 # Por defecto selecciona √7 (equivalente al valor anterior)
+)
+
+# Extraemos el número entero de la opción seleccionada para calcular n_max
+n_max = int(raiz_elegida.replace("√", "")) - 1
 
 # Configuración de la figura de Matplotlib
 fig, ax = plt.subplots(figsize=(8, 8))
@@ -74,36 +80,29 @@ colores = ['indianred', 'orangered', 'saddlebrown', 'darkseagreen',
            'darkolivegreen', 'gold', 'darkorange', 'seagreen',
            'lightseagreen', 'teal', 'chocolate', 'dodgerblue', 'magenta']
 
-# Bucle para generar los siguientes triángulos según el slider
+# Bucle para generar los siguientes triángulos
 vertice_anterior = v_actual
 for i in range(3, n_max + 2):
-    # Vector desde el origen al vértice anterior
     vec_dir = vertice_anterior - origen
     dist = np.linalg.norm(vec_dir)
     
-    # Vector unitario normal (perpendicular para el nuevo cateto de longitud f)
     unit_dir = vec_dir / dist
     normal_dir = np.array([-unit_dir[1], unit_dir[0]])
     
-    # Nuevo vértice exterior
     nuevo_vertice = vertice_anterior + normal_dir * f
     pos_raices.append(nuevo_vertice)
     all_x.append(nuevo_vertice[0])
     all_y.append(nuevo_vertice[1])
     
-    # Color actual
     color_hip = colores[(i - 2) % len(colores)]
     
-    # Dibujar cateto exterior discontinuo
     ax.plot([vertice_anterior[0], nuevo_vertice[0]], 
             [vertice_anterior[1], nuevo_vertice[1]], 
             color='black', linestyle='--')
     
-    # Etiqueta "1" en el cateto
     mid_cateto = (vertice_anterior + nuevo_vertice) / 2
     ax.text(mid_cateto[0] + 0.05, mid_cateto[1] + 0.05, "1", fontsize=10, fontweight='bold')
     
-    # Dibujar hipotenusa continua hacia el origen
     ax.plot([nuevo_vertice[0], origen[0]], 
             [nuevo_vertice[1], origen[1]], 
             color=color_hip, linewidth=3)
@@ -113,7 +112,6 @@ for i in range(3, n_max + 2):
 # Escribir las etiquetas de las raíces en el exterior
 r = 2
 for i, pos in enumerate(pos_raices[:n_max]):
-    # Dirección radial para separar un poco la etiqueta
     vec_rad = pos - origen
     vec_rad_norm = vec_rad / np.linalg.norm(vec_rad)
     pos_etiqueta = pos + vec_rad_norm * 0.35
@@ -125,7 +123,7 @@ for i, pos in enumerate(pos_raices[:n_max]):
             ha='center', va='center', fontsize=12, fontweight='bold', color=color_etiqueta)
     r += 1
 
-# Márgenes dinámicos: se ajustan automáticamente al tamaño máximo y mínimo de la espiral
+# Márgenes dinámicos
 margin = 1.0
 ax.set_xlim(min(all_x) - margin, max(all_x) + margin)
 ax.set_ylim(min(all_y) - margin, max(all_y) + margin)
