@@ -18,9 +18,9 @@ st.image("logo_newton-salas.jpg", width=180)
 st.title("📈 Interés Compuesto (3.º ESO)")
 st.markdown(
     "¿Sabías que el **interés compuesto** hace que tus ahorros crezcan generando nuevos intereses "
-    "sobre los intereses anteriores? Modifica los valores en el panel de la izquierda y observa cómo evoluciona tu dinero."
-    "Utiliza esa app web como fuente de ejercicios solucionados y para entender cómo aumenta el capital según aumenta el interés."
-    "y la frecuencia de capitalización (aumenta más si se cobran los intereses cada mes, que si se cobran cada año).
+    "sobre los intereses anteriores? Modifica los valores en el panel de la izquierda y observa cómo evoluciona tu dinero. "
+    "Utiliza esa app web como fuente de ejercicios solucionados y para entender cómo aumenta el capital según aumenta el interés "
+    "y la frecuencia de capitalización (aumenta más si se cobran los intereses cada mes, que si se cobran cada año)."
 )
 
 # ==========================================
